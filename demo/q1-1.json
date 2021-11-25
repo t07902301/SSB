@@ -1,0 +1,111 @@
+[
+    [
+        [
+            {
+                "Plan": {
+                    "Node Type": "Aggregate",
+                    "Strategy": "Plain",
+                    "Partial Mode": "Finalize",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 124378.3,
+                    "Total Cost": 124378.31,
+                    "Plan Rows": 1,
+                    "Plan Width": 8,
+                    "Plans": [
+                        {
+                            "Node Type": "Gather",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Startup Cost": 124378.08,
+                            "Total Cost": 124378.29,
+                            "Plan Rows": 2,
+                            "Plan Width": 8,
+                            "Workers Planned": 2,
+                            "Single Copy": false,
+                            "Plans": [
+                                {
+                                    "Node Type": "Aggregate",
+                                    "Strategy": "Plain",
+                                    "Partial Mode": "Partial",
+                                    "Parent Relationship": "Outer",
+                                    "Parallel Aware": false,
+                                    "Async Capable": false,
+                                    "Startup Cost": 123378.08,
+                                    "Total Cost": 123378.09,
+                                    "Plan Rows": 1,
+                                    "Plan Width": 8,
+                                    "Plans": [
+                                        {
+                                            "Node Type": "Hash Join",
+                                            "Parent Relationship": "Outer",
+                                            "Parallel Aware": false,
+                                            "Async Capable": false,
+                                            "Join Type": "Inner",
+                                            "Startup Cost": 77.51,
+                                            "Total Cost": 123143.21,
+                                            "Plan Rows": 46975,
+                                            "Plan Width": 8,
+                                            "Inner Unique": true,
+                                            "Hash Cond": "(lineorder.lo_orderdate = dim_date.d_datekey)",
+                                            "Plans": [
+                                                {
+                                                    "Node Type": "Seq Scan",
+                                                    "Parent Relationship": "Outer",
+                                                    "Parallel Aware": true,
+                                                    "Async Capable": false,
+                                                    "Relation Name": "lineorder",
+                                                    "Alias": "lineorder",
+                                                    "Startup Cost": 0.0,
+                                                    "Total Cost": 122200.75,
+                                                    "Plan Rows": 328957,
+                                                    "Plan Width": 12,
+                                                    "Filter": "((lo_discount >= 1) AND (lo_discount <= 3) AND (lo_quantity < 25))"
+                                                },
+                                                {
+                                                    "Node Type": "Hash",
+                                                    "Parent Relationship": "Inner",
+                                                    "Parallel Aware": false,
+                                                    "Async Capable": false,
+                                                    "Startup Cost": 72.95,
+                                                    "Total Cost": 72.95,
+                                                    "Plan Rows": 365,
+                                                    "Plan Width": 4,
+                                                    "Plans": [
+                                                        {
+                                                            "Node Type": "Seq Scan",
+                                                            "Parent Relationship": "Outer",
+                                                            "Parallel Aware": false,
+                                                            "Async Capable": false,
+                                                            "Relation Name": "dim_date",
+                                                            "Alias": "dim_date",
+                                                            "Startup Cost": 0.0,
+                                                            "Total Cost": 72.95,
+                                                            "Plan Rows": 365,
+                                                            "Plan Width": 4,
+                                                            "Filter": "(d_year = 1993)"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "JIT": {
+                    "Functions": 18,
+                    "Options": {
+                        "Inlining": false,
+                        "Optimization": false,
+                        "Expressions": true,
+                        "Deforming": true
+                    }
+                }
+            }
+        ]
+    ]
+]
