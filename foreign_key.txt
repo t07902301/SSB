@@ -1,0 +1,4 @@
+lo_orderdate = d_datekey
+lo_partkey = p_partkey
+lo_suppkey = s_suppkey
+lo_custkey = c_custkey

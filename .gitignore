@@ -1,1 +1,3 @@
 query_plan/
+queries/
+__pycache__/
