@@ -5,7 +5,7 @@ import numpy as np
 # import json,os
 class env():
     def __init__(self) -> None:
-
+        self.replicated_table={}
         with open("db_config.yaml", "r") as stream:
             try:
                 dumped=yaml.safe_load(stream)
@@ -16,12 +16,12 @@ class env():
         n_attr=0
         for table,attributes in dumped['tables'].items():
             # db_config[table]={"action":1}
+            self.replicated_table[table]=0
             self.partition_scheme[table]={}
             for attr in attributes:
                 self.partition_scheme[table][attr]=0   
             self.db_config[table]=[(n_attr,n_attr+len(attributes)),attributes]
-            n_attr+=len(attributes)   
-
+            n_attr+=len(attributes)
         # with open('db_config.json', 'r') as fp:
         #     db_config = json.load(fp)        
         with open('foreign_key.txt','r') as fw:
@@ -37,48 +37,33 @@ class env():
                         edge.append((table,each))
             fk_edges[(edge[0],edge[1])]=0   
 
-        self.fk_edges=fk_edges  
-
+        self.fk_edges=fk_edges  #((tbl_1,attr_1),(tbl_2,attr_2))=is_activated
         self.fk_edges_init=fk_edges.copy()
-        self.init_ps=self.partition_scheme.copy()
+        self.partition_scheme_init=self.partition_scheme.copy()
 
-        # self.table_states=table_states
-        # self.query_states=[1]*12
-        # self.db_config={
-        #     "customer": [(0,8)],
-        #     "dim_date":(8,25),
-        #     "lineorder":(25,42),
-        #     "part": (42,51),
-        #     "supplier": (51,58)
-        # }
-        self.fk_info={}
+        self.fk_info={} #tbl_1=[((tbl_1,attr_1),(tbl_2,attr_2))]
         self.get_fk_info()
         # self.action_type=['partition','replicate','activate',"deactivate"]
     def get_fk_info(self):
-        for table_pair,is_activated in self.fk_edges.items():
-            if table_pair[0][0] not in self.fk_info:
-                self.fk_info[table_pair[0][0]]=[]
-            if table_pair[1][0] not in self.fk_info:
-                self.fk_info[table_pair[1][0]]=[]            
-            self.fk_info[table_pair[0][0]].append(table_pair)
-            self.fk_info[table_pair[1][0]].append(table_pair)
-    def decode_table_states(self,states,in_action=True):
-        if in_action:
-            tables=states[:5]
-            attrs=states[5:63]
-        else:
-            attrs=states
-        pass
-    def is_partitioned(self,table,attrs):
-        pass
+        for pair,is_activated in self.fk_edges.items():
+            if pair[0][0] not in self.fk_info:
+                self.fk_info[pair[0][0]]=[]
+            if pair[1][0] not in self.fk_info:
+                self.fk_info[pair[1][0]]=[]            
+            self.fk_info[pair[0][0]].append(pair)
+            self.fk_info[pair[1][0]].append(pair)
+    def replicate(self,table):
+        self.replicated_table[table]=1
+        for attr in self.partition_scheme[table]:
+            self.partition_scheme[table][attr]=0
     def reset(self):
-        self.partition_scheme=self.init_ps.copy()
+        self.partition_scheme=self.partition_scheme_init.copy()
         self.fk_edges=self.fk_edges_init.copy()
     def step(self,action_idx):
-        fk_edges_number=4
-        # tables_attr_number=58
+        n_fk_edges=4
+        n_tables_attr=58
         # old_state=self.get_current_state()
-        if action_idx<fk_edges_number:
+        if action_idx<n_fk_edges:
             candidates=list(self.fk_edges.keys())
             edge=candidates[action_idx]
             if self.fk_edges[edge]==0:
@@ -94,20 +79,46 @@ class env():
                 self.fk_edges[edge]=1
                 self.partition_scheme[tbl_1][tbl_1_attr]=1
                 self.partition_scheme[tbl_2][tbl_2_attr]=1
+                self.replicated_table[tbl_1]=0
+                self.replicated_table[tbl_2]=0
             else:
                 # self.fk_edges[edge]=0
                 # tbl_1,tbl_1_attr,tbl_2,tbl_2_attr=edge[0][0],edge[0][1],edge[1][0],edge[1][1] # to be Deactivated
                 # self.partition_scheme[tbl_1][tbl_1_attr]=0
                 # self.partition_scheme[tbl_2][tbl_2_attr]=0  
                 self.deactivate(edge)                
-        else:
+        elif action_idx<n_tables_attr:
+            action_idx-=n_fk_edges
             for table,attr_info in self.db_config.items():
                 attr_range=attr_info[0]
-                if action_idx> attr_range[0] and action_idx<attr_range[1]:
+                if action_idx>= attr_range[0] and action_idx<attr_range[1]:
                     break
             attr_list=attr_info[1]
-            self.partition_scheme[table][attr_list[action_idx-attr_range[0]]]=1 if self.partition_scheme[table][attr_list[action_idx-attr_range[0]]]==0 else 0
+            for attr in attr_list: #Only one attr can be partitioned key
+                self.partition_scheme[table][attr]=0
+            attr=attr_list[action_idx-attr_range[0]]
+            # try:
+            #     self.partition_scheme[table][attr_list[action_idx-attr_range[0]]]=1 if self.partition_scheme[table][attr_list[action_idx-attr_range[0]]]==0 else 0
+            # except:
+            #     print(action_idx-attr_range[0])
+            #     print(attr_list)
+            #     print(action_idx)
+            self.partition_scheme[table][attr]=1
+            # self.partition_scheme[table][attr]=1 if self.partition_scheme[table][attr]==0 else 0
+            self.replicated_table[table]=0
+            pair=(table,attr)
+            for edge in self.fk_info[table]:
+                if pair not in edge and self.fk_edges[edge]==1:
+                    self.deactivate(edge)
+            
 
+            # if attr!=self.table_fk[table]:
+        else:
+            table_list=list(self.partition_scheme.keys())
+            table=table_list[action_idx-62]
+            self.replicate(table)
+            for edge in self.fk_info[table]:
+                self.deactivate(edge)
             ## Old method of partitioning tables
             # tables_list=list(self.table_range.keys())
             # table_idx=np.where(tables==1)
@@ -191,8 +202,8 @@ class env():
     def deactivate(self,edge):
         self.fk_edges[edge]=0
         tbl_1,tbl_1_attr,tbl_2,tbl_2_attr=edge[0][0],edge[0][1],edge[1][0],edge[1][1] # to be Deactivated
-        self.partition_scheme[tbl_1][tbl_1_attr]=0
-        self.partition_scheme[tbl_2][tbl_2_attr]=0
+        self.replicate(tbl_1)
+        self.replicate(tbl_2)
     def cost_estimate(self):
         # TODO partition scheme and plans
         pass
@@ -200,7 +211,7 @@ class env():
         # self.table_states=[]
         table_states=[]
         for table,attributes in self.partition_scheme.items():
-            table_states+=list(attributes.values()) 
+            table_states+=[self.replicated_table[table]]+list(attributes.values()) 
             # print(table,list(attributes.values()),len(list(attributes.values())))
 
         # print(len(self.table_states))
