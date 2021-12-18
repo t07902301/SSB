@@ -1,3 +1,16 @@
+mkdir /usr/local/pgsql/data_coord1
+mkdir /usr/local/pgsql/data_datanode_1
+mkdir /usr/local/pgsql/data_datanode_2
+mkdir /usr/local/pgsql/data_datanode_3
+mkdir /usr/local/pgsql/data_datanode_4
+mkdir /usr/local/pgsql/data_gtm
+chown postgres /usr/local/pgsql/data_coord1
+chown postgres /usr/local/pgsql/data_datanode_1
+chown postgres /usr/local/pgsql/data_datanode_2
+chown postgres /usr/local/pgsql/data_datanode_3
+chown postgres /usr/local/pgsql/data_datanode_4
+chown postgres /usr/local/pgsql/data_gtm
+
 /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data_coord1 \
   --nodename coord1
 /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data_datanode_1 \
