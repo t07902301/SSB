@@ -1,5 +1,6 @@
 import psycopg2,os
 import numpy as np
+import argparse
 def connect():
     try:
         conn = psycopg2.connect(
@@ -29,11 +30,19 @@ def execute(conn,run_cnt):
             print('{} executed'.format(sql))
     total_time=np.sum(np.array(execution_time))/1000
     return total_time 
+def create_parser():
+    parse = argparse.ArgumentParser()
+    parse.add_argument('--epochs', type=int, nargs='?', const=True, default=1)
+    return parse
+
 if __name__ == "__main__":
+    parser = create_parser()
+    args = parser.parse_args() 
+    # print(args)   
     conn=connect()
     # print(type(execute(conn)))
     # execute(conn)
-    result=execute(conn,1)
+    result=execute(conn,args.epochs)
     print("{}s".format(result))
     # print(type(result[0]))            
     # print(result[-1][0].split(' '))
