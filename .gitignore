@@ -1,3 +1,4 @@
 query_plan/
-queries/
+# queries/
 __pycache__/
+debug.py
