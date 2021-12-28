@@ -14,19 +14,22 @@ dvdrental=# select count(*) from film;
 
 STORAGE should be LARGE!
 
-wget url
-tar -xf archive.tar.gz
+wget https://www.postgres-xl.org/downloads/postgres-xl-10r1.1.tar.gz
+tar -xf postgres-xl-10r1.1.tar.gz
 apt update
 sudo apt install libreadline-dev
 ./configure
-
+make
+  (All of PostgreSQL successfully made. Ready to install.)
 (root)
+make install
 PATH=/usr/local/pgsql/bin:$PATH
 export PATH
 . ~/.bashrc
+sudo adduser postgres --disabled-password
 
-/usr/local/pgsql/bin/
-
+pkill -u postgres
+/usr/local/pgsql/bin/psql
 ps -elf | grep postgres
 sudo systemctl start postgresql
 sudo systemctl status postgresql
