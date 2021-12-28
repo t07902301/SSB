@@ -21,10 +21,12 @@ chown postgres /usr/local/pgsql/data_gtm
   --nodename datanode_3
 /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data_datanode_4 \
   --nodename datanode_4
-
 /usr/local/pgsql/bin/initgtm -D /usr/local/pgsql/data_gtm -Z gtm
-/usr/local/pgsql/bin/gtm -D /usr/local/pgsql/data_gtm >logfile 2>&1 &
 
+/usr/local/pgsql/bin/gtm -D /usr/local/pgsql/data_gtm >logfile 2>&1 &
+/usr/local/pgsql/bin/postgres --coordinator -c pooler_port=40100 \
+  -D /usr/local/pgsql/data_coord1 >logfile 2>&1 &
+  
 /usr/local/pgsql/bin/postgres --datanode -p 15432 -c pooler_port=40101 \
   -D /usr/local/pgsql/data_datanode_1 >logfile 2>&1 &
 /usr/local/pgsql/bin/postgres --datanode -p 15433 -c pooler_port=40102 \
@@ -33,8 +35,7 @@ chown postgres /usr/local/pgsql/data_gtm
   -D /usr/local/pgsql/data_datanode_3 >logfile 2>&1 &
 /usr/local/pgsql/bin/postgres --datanode -p 30002 -c pooler_port=30012 \
   -D /usr/local/pgsql/data_datanode_4 >logfile 2>&1 &
-/usr/local/pgsql/bin/postgres --coordinator -c pooler_port=40100 \
-  -D /usr/local/pgsql/data_coord1 >logfile 2>&1 &
+
 
 /usr/local/pgsql/bin/psql -c "ALTER NODE coord1 \
   WITH (TYPE = 'coordinator', PORT = 5432)" postgres
