@@ -1,6 +1,9 @@
 import psycopg2,os
 import numpy as np
-import argparse
+import argparse,signal
+import os,subprocess
+def handler(signum, frame):
+    print('time out!')
 def connect():
     try:
         conn = psycopg2.connect(
@@ -29,21 +32,38 @@ def execute(conn,run_cnt):
             execution_time.append(np.average(np.array(execution_per_run)))
             print('{} executed'.format(sql))
     total_time=np.sum(np.array(execution_time))/1000
-    return total_time 
+    return total_time
+def alter_table(conn,scheme):
+    cursor = conn.cursor()
+    # sql_statement='\\d+ customer'
+    sql_statement="SELECT * FROM information_schema.columns where table_name='customer';"
+    cursor.execute(sql_statement)
+    results=cursor.fetchall()
+    print(type(results))
+    print(results)
 def create_parser():
     parse = argparse.ArgumentParser()
     parse.add_argument('--epochs', type=int, nargs='?', const=True, default=1)
+    parse.add_argument('--timeout',type=int,default=10)
     return parse
-
+def command():
+    # os.system("psql -d p -c '\d+ customer'")
+    x=subprocess.check_output("psql -d p -c '\d+ customer'",stderr=subprocess.STDOUT,shell=True)
+    # print(x)
 if __name__ == "__main__":
     parser = create_parser()
     args = parser.parse_args() 
     # print(args)   
     conn=connect()
-    # print(type(execute(conn)))
-    # execute(conn)
+    
+    # command()
+    # signal.signal(signal.SIGALRM, handler)
+    # signal.alarm(args.timeout)
+    # signal.alarm(10)
+
     result=execute(conn,args.epochs)
     print("{}s".format(result))
+    # alter_table(conn,'')
     # print(type(result[0]))            
     # print(result[-1][0].split(' '))
     # print(type(result[0][-1]))
