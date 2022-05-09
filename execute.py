@@ -2,6 +2,7 @@ import psycopg2,os
 import numpy as np
 import argparse,signal
 import os,subprocess
+import json
 def handler(signum, frame):
     print('time out!')
 def connect():
@@ -14,7 +15,7 @@ def connect():
         return conn
     except Exception as error:
         print(error)
-def execute(conn,run_cnt):
+def execute(conn,run_cnt,path):
     sql_base_path='queries/'
     cursor = conn.cursor()
     execution_time=[]
@@ -25,11 +26,15 @@ def execute(conn,run_cnt):
             # print(type(sql))
             # cursor.execute('explain (ANALYZE TRUE,FORMAT json ) {}'.format(sql_content))
             for i in range(run_cnt):
-                cursor.execute('explain (ANALYZE) {}'.format(sql_content))
+                cursor.execute('explain (ANALYZE,FORMAT json) {}'.format(sql_content))
                 results = cursor.fetchall()
-                execution_per_run.append(float(results[-1][0].split(' ')[2]))
-            # execution_time.append(float(results[0][0][0][-1][0].split(' ')[2]))
-            execution_time.append(np.average(np.array(execution_per_run)))
+                # execution_per_run.append(float(results[-1][0].split(' ')[2]))
+                # print(results)
+            if not os.path.exists(r'plans/{}'.format(path)):
+                os.mkdir(r'plans/{}'.format(path))
+            with open(r'plans/{}/{}.json'.format(path,sql.split('.')[0]), 'w') as f:
+                json.dump(results, f, ensure_ascii=False, indent=4)
+            # execution_time.append(np.average(np.array(execution_per_run)))
             print('{} executed'.format(sql))
     total_time=np.sum(np.array(execution_time))/1000
     return total_time
@@ -45,6 +50,7 @@ def create_parser():
     parse = argparse.ArgumentParser()
     parse.add_argument('--epochs', type=int, nargs='?', const=True, default=1)
     parse.add_argument('--timeout',type=int,default=10)
+    parse.add_argument('--path',type=str,default='')
     return parse
 def command():
     # os.system("psql -d p -c '\d+ customer'")
@@ -61,7 +67,7 @@ if __name__ == "__main__":
     # signal.alarm(args.timeout)
     # signal.alarm(10)
 
-    result=execute(conn,args.epochs)
+    result=execute(conn,args.epochs,args.path)
     print("{}s".format(result))
     # alter_table(conn,'')
     # print(type(result[0]))            
